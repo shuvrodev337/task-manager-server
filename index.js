@@ -45,6 +45,9 @@ async function run() {
       if (existingUser) {
         return res.send({ message: "user already exists in Database" });
       }
+      if (!user.role) {
+        user.role = 'user'
+      }
 
       const result = await usersCollection.insertOne(user);
       res.send(result);
