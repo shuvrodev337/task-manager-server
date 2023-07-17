@@ -101,6 +101,28 @@ async function run() {
   })
 
 
+  // -- Update a task --//
+  app.put("/tasks/update/:id", async (req, res) => {
+    const id = req.params.id;
+    const updatedTask = req.body;
+    const filter = { _id: new ObjectId(id) };
+
+    const options = { upsert: true };
+    const task = {
+      $set: {...updatedTask},
+    };
+
+// title:updatedTask.title,
+        // description:updatedTask.description,
+        // dueDate:updatedTask.dueDate,
+        // assignedUser:updatedTask.assignedUser,
+        // status:updatedTask.status,
+        // assignedUserEmail:updatedTask.assignedUserEmail,
+
+    const result = await tasksCollection.updateOne(filter, task, options);
+    res.send(result);
+  });
+
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     console.log(
@@ -116,3 +138,6 @@ run().catch(console.dir);
 app.listen(port, () => {
   console.log(`My app listening on port ${port}`);
 });
+// const obj  = {name:'shuvro', age: 28}
+// const newObj = {...obj}
+// console.log(newObj);
