@@ -33,6 +33,8 @@ async function run() {
     // await client.connect();
     // Create collections here
     const usersCollection = client.db("taskDB").collection("usersCollection");
+    const tasksCollection = client.db("taskDB").collection("tasksCollection");
+
 
     // CRUD operation here
 
@@ -53,7 +55,51 @@ async function run() {
       res.send(result);
     });
 
+  // Getting all users
+  app.get('/users', async(req,res)=>{
+    const filter = {role: 'user'}
+    const result = await usersCollection.find(filter).toArray()
+    res.send(result)
+  })
+
+
+
+  // Creating a task
+  app.post('/tasks', async (req,res)=>{
+    const newTask = req.body;
+      const result = await tasksCollection.insertOne(newTask);
+      res.send(result);
+  })
+
+
+
+  //--get user specific tasks--//
+  app.get("/tasks", async (req, res) => {
+    const userEmail = req.query.email
+    // console.log('user email '+userEmail);
+    const query = {assignedUserEmail: userEmail}
+    const result = await tasksCollection.find(query).toArray()
+    res.send(result);
+  });
+
+  // -- Complete A Task --//
+
+  app.patch('/tasks/completed/:id', async (req, res) => {
+    const id = req.params.id;
   
+    const filter = { _id: new ObjectId(id) };
+    const updateDoc = {
+      $set: {
+        status: 'completed'
+      },
+    };
+    
+
+    const result = await tasksCollection.updateOne(filter, updateDoc);
+    res.send(result);
+
+  })
+
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
