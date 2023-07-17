@@ -111,17 +111,19 @@ async function run() {
     const task = {
       $set: {...updatedTask},
     };
-
-// title:updatedTask.title,
-        // description:updatedTask.description,
-        // dueDate:updatedTask.dueDate,
-        // assignedUser:updatedTask.assignedUser,
-        // status:updatedTask.status,
-        // assignedUserEmail:updatedTask.assignedUserEmail,
-
     const result = await tasksCollection.updateOne(filter, task, options);
     res.send(result);
   });
+
+  //--Delete a task --//
+  app.delete('/tasks/:id', async (req, res) => {
+    const id = req.params.id
+    console.log(id);
+    const query = { _id: new ObjectId(id) };
+  
+    const result = await tasksCollection.deleteOne(query);
+    res.send(result);
+  })
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
@@ -138,6 +140,3 @@ run().catch(console.dir);
 app.listen(port, () => {
   console.log(`My app listening on port ${port}`);
 });
-// const obj  = {name:'shuvro', age: 28}
-// const newObj = {...obj}
-// console.log(newObj);
