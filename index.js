@@ -11,6 +11,28 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+
+// JWT Verification
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res
+      .status(401)
+      .send({ error: true, message: "Unauthorized Access" });
+  }
+  const token = authorization.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res
+        .status(403)
+        .send({ error: true, message: "Unauthorized Access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
+
 app.get("/", (req, res) => {
   res.send("Hello World! Task Manager Server is running!!");
 });
@@ -45,6 +67,34 @@ app.post('/jwt', (req,res)=>{
   res.send({token})
 })
 
+// Middleware: verifyAdmin
+
+const verifyAdmin = async (req, res, next) => {
+  const email = req.decoded.email;
+  const query = { email: email }
+  const user = await usersCollection.findOne(query);
+  if (user?.role !== 'admin') {
+    // console.log('not admin');
+    return res.status(403).send({ error: true, message: 'forbidden message' });
+  }
+  next();
+}
+
+     //---Check if the user is admin or not // api call from isAdmin hook---//
+     app.get('/users/admin', verifyJWT,async (req,res)=>{
+      const email = req.query.email
+      // If the user from the token and the user whose admin verification is being checked are not same then,
+      if (req.decoded.email !== email) {
+        res.send({admin:false}) 
+      }
+      // If the user from the token and the user whose admin verification is being checked are same
+      const query = {email:email}
+      const user = await usersCollection.findOne(query)
+      const result = {admin:user?.role === 'admin'} // isAdmin e true or false debe
+      res.send(result)
+  
+    })
+  
     // ---Inserting user to db---//
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -69,6 +119,13 @@ app.post('/jwt', (req,res)=>{
     res.send(result)
   })
 
+  // Getting all tasks
+  app.get('/tasks',verifyJWT,verifyAdmin, async(req,res)=>{
+    // console.log('hitting');
+    const result = await tasksCollection.find().toArray()
+    res.send(result)
+  })
+
 
 
   // Creating a task
@@ -78,12 +135,21 @@ app.post('/jwt', (req,res)=>{
       res.send(result);
   })
 
-
+// handle search
+app.get('/all-tasks/search', verifyJWT, verifyAdmin, async (req,res)=>{
+  const searchText = req.query.search;
+  const query = {assignedUser: {
+    $regex: searchText,
+    $options: 'i'
+  }}
+    const result = await tasksCollection.find(query).toArray();
+    res.send(result);
+})
 
   //--get user specific tasks--//
-  app.get("/tasks", async (req, res) => {
+  app.get("/user/tasks",verifyJWT, async (req, res) => {
     const userEmail = req.query.email
-    // console.log('user email '+userEmail);
+    // console.log('user email '+ userEmail);
     const query = {assignedUserEmail: userEmail}
     const result = await tasksCollection.find(query).toArray()
     res.send(result);
@@ -91,7 +157,7 @@ app.post('/jwt', (req,res)=>{
 
   // -- Complete A Task --//
 
-  app.patch('/tasks/completed/:id', async (req, res) => {
+  app.patch('/tasks/completed/:id',verifyJWT, async (req, res) => {
     const id = req.params.id;
   
     const filter = { _id: new ObjectId(id) };
@@ -109,7 +175,7 @@ app.post('/jwt', (req,res)=>{
 
 
   // -- Update a task --//
-  app.put("/tasks/update/:id", async (req, res) => {
+  app.put("/tasks/update/:id",verifyJWT, async (req, res) => {
     const id = req.params.id;
     const updatedTask = req.body;
     const filter = { _id: new ObjectId(id) };
@@ -123,7 +189,7 @@ app.post('/jwt', (req,res)=>{
   });
 
   //--Delete a task --//
-  app.delete('/tasks/:id', async (req, res) => {
+  app.delete('/tasks/:id',verifyJWT, async (req, res) => {
     const id = req.params.id
     console.log(id);
     const query = { _id: new ObjectId(id) };
