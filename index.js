@@ -113,18 +113,18 @@ const verifyAdmin = async (req, res, next) => {
     });
 
   // Getting all users
-  app.get('/users', async(req,res)=>{
+  app.get('/users',verifyJWT,verifyAdmin, async(req,res)=>{
     const filter = {role: 'user'}
     const result = await usersCollection.find(filter).toArray()
     res.send(result)
   })
 
   // Getting all tasks
-  app.get('/tasks',verifyJWT,verifyAdmin, async(req,res)=>{
-    // console.log('hitting');
-    const result = await tasksCollection.find().toArray()
-    res.send(result)
-  })
+  // app.get('/tasks',verifyJWT,verifyAdmin, async(req,res)=>{
+  //   // console.log('hitting');
+  //   const result = await tasksCollection.find().toArray()
+  //   res.send(result)
+  // })
 
 
 
@@ -149,7 +149,6 @@ app.get('/all-tasks/search', verifyJWT, verifyAdmin, async (req,res)=>{
   //--get user specific tasks--//
   app.get("/user/tasks",verifyJWT, async (req, res) => {
     const userEmail = req.query.email
-    // console.log('user email '+ userEmail);
     const query = {assignedUserEmail: userEmail}
     const result = await tasksCollection.find(query).toArray()
     res.send(result);
@@ -189,7 +188,7 @@ app.get('/all-tasks/search', verifyJWT, verifyAdmin, async (req,res)=>{
   });
 
   //--Delete a task --//
-  app.delete('/tasks/:id',verifyJWT, async (req, res) => {
+  app.delete('/tasks/delete/:id',verifyJWT, async (req, res) => {
     const id = req.params.id
     console.log(id);
     const query = { _id: new ObjectId(id) };
