@@ -69,31 +69,31 @@ app.post('/jwt', (req,res)=>{
 
 // Middleware: verifyAdmin
 
-const verifyAdmin = async (req, res, next) => {
-  const email = req.decoded.email;
-  const query = { email: email }
-  const user = await usersCollection.findOne(query);
-  if (user?.role !== 'admin') {
-    // console.log('not admin');
-    return res.status(403).send({ error: true, message: 'forbidden message' });
-  }
-  next();
-}
+// const verifyAdmin = async (req, res, next) => {
+//   const email = req.decoded.email;
+//   const query = { email: email }
+//   const user = await usersCollection.findOne(query);
+//   if (user?.role !== 'admin') {
+//     // console.log('not admin');
+//     return res.status(403).send({ error: true, message: 'forbidden message' });
+//   }
+//   next();
+// }
 
-     //---Check if the user is admin or not // api call from isAdmin hook---//
-     app.get('/users/admin', verifyJWT,async (req,res)=>{
-      const email = req.query.email
-      // If the user from the token and the user whose admin verification is being checked are not same then,
-      if (req.decoded.email !== email) {
-        res.send({admin:false}) 
-      }
-      // If the user from the token and the user whose admin verification is being checked are same
-      const query = {email:email}
-      const user = await usersCollection.findOne(query)
-      const result = {admin:user?.role === 'admin'} // isAdmin e true or false debe
-      res.send(result)
+    //  //---Check if the user is admin or not // api call from isAdmin hook---//
+    //  app.get('/users/admin', verifyJWT,async (req,res)=>{
+    //   const email = req.query.email
+    //   // If the user from the token and the user whose admin verification is being checked are not same then,
+    //   if (req.decoded.email !== email) {
+    //     res.send({admin:false}) 
+    //   }
+    //   // If the user from the token and the user whose admin verification is being checked are same
+    //   const query = {email:email}
+    //   const user = await usersCollection.findOne(query)
+    //   const result = {admin:user?.role === 'admin'} // isAdmin e true or false debe
+    //   res.send(result)
   
-    })
+    // })
   
     // ---Inserting user to db---//
     app.post("/users", async (req, res) => {
@@ -113,11 +113,11 @@ const verifyAdmin = async (req, res, next) => {
     });
 
   // Getting all users
-  app.get('/users',verifyJWT,verifyAdmin, async(req,res)=>{
-    const filter = {role: 'user'}
-    const result = await usersCollection.find(filter).toArray()
-    res.send(result)
-  })
+  // app.get('/users',verifyJWT,verifyAdmin, async(req,res)=>{
+  //   const filter = {role: 'user'}
+  //   const result = await usersCollection.find(filter).toArray()
+  //   res.send(result)
+  // })
 
   // Getting all tasks
   // app.get('/tasks',verifyJWT,verifyAdmin, async(req,res)=>{
@@ -136,15 +136,15 @@ const verifyAdmin = async (req, res, next) => {
   })
 
 // handle search
-app.get('/all-tasks/search', verifyJWT, verifyAdmin, async (req,res)=>{
-  const searchText = req.query.search;
-  const query = {assignedUser: {
-    $regex: searchText,
-    $options: 'i'
-  }}
-    const result = await tasksCollection.find(query).toArray();
-    res.send(result);
-})
+// app.get('/all-tasks/search', verifyJWT, async (req,res)=>{
+//   const searchText = req.query.search;
+//   const query = {assignedUser: {
+//     $regex: searchText,
+//     $options: 'i'
+//   }}
+//     const result = await tasksCollection.find(query).toArray();
+//     res.send(result);
+// })
 
   //--get user specific tasks--//
   app.get("/user/tasks",verifyJWT, async (req, res) => {
@@ -154,15 +154,49 @@ app.get('/all-tasks/search', verifyJWT, verifyAdmin, async (req,res)=>{
     res.send(result);
   });
 
-  // -- Complete A Task --//
+  // -- todo A Task --//
 
-  app.patch('/tasks/completed/:id',verifyJWT, async (req, res) => {
+  app.patch('/tasks/todo/:id',verifyJWT, async (req, res) => {
     const id = req.params.id;
   
     const filter = { _id: new ObjectId(id) };
     const updateDoc = {
       $set: {
-        status: 'completed'
+        status: 'todo'
+      },
+    };
+    
+
+    const result = await tasksCollection.updateOne(filter, updateDoc);
+    res.send(result);
+
+  })
+  // -- Doing A Task --//
+
+  app.patch('/tasks/doing/:id',verifyJWT, async (req, res) => {
+    const id = req.params.id;
+  
+    const filter = { _id: new ObjectId(id) };
+    const updateDoc = {
+      $set: {
+        status: 'doing'
+      },
+    };
+    
+
+    const result = await tasksCollection.updateOne(filter, updateDoc);
+    res.send(result);
+
+  })
+  // -- Complete A Task --//
+
+  app.patch('/tasks/done/:id',verifyJWT, async (req, res) => {
+    const id = req.params.id;
+  
+    const filter = { _id: new ObjectId(id) };
+    const updateDoc = {
+      $set: {
+        status: 'done'
       },
     };
     
